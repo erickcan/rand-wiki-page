@@ -7,14 +7,14 @@
       RAND-WIKI-PAGE-NAME "Random page in category - Wikipedia")
 
 (defn main [args]
-  (setv args (CmdArgs args) again True)
+  (setv args (CmdArgs args) again True cat (. args cat))
   (while again
-    (setv p (random-wikipedia-page (.replace (. args cat) " " "_"))
+    (setv p (random-wikipedia-page cat)
           page-title (get-page-title p))
     (if (= page-title RAND-WIKI-PAGE-NAME)
-        (exit-invalid-cat (. args cat)))
+        (exit-invalid-cat cat))
     (if (-> (. args only-art) not (or (article? page-title)))
-        (if (. args open-first)
+        (if (. args no-conf)
             (do
               (webbrowser.open p)
               (setv again False))
@@ -57,16 +57,18 @@
   (defn __init__ [self cmd-args]
     (setv args-dict (->
       (doto (argparse.ArgumentParser :prog "rand-wiki-page")
-        (.add-argument "-f" "--open-first" :help "open the first random page"
-          :action "store_true")
+        (.add-argument "-f" "--no-conf" :action "store_true"
+          :help "open a page without asking for confirmation")
         (.add-argument "-a" "--only-articles"
           :help "exclude categories and other non-article pages" :action "store_true")
         (.add-argument "-c" "--cat" :help "category of the page"))
       (.parse-args cmd-args)
       (. __dict__)))
-    (setv self.cat (get args-dict "cat")
+    (setv self.cat (if (none? (setx cat (get args-dict "cat")))
+                       None
+                       (.replace cat " " "_"))
           self.only-art (get args-dict "only_articles")
-          self.open-first (get args-dict "open_first"))))
+          self.no-conf (get args-dict "no_conf"))))
 
 (if (= __name__ "__main__")
   (try
