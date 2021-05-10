@@ -1,4 +1,5 @@
-(import urllib.request urllib.error re webbrowser sys requests argparse)
+(import urllib.error re webbrowser requests argparse
+        [urllib.request [urlopen]] [sys [argv]])
 
 (setv TITLE-REGEX (re.compile r"<\W*title\W*(.*)</title")
       WIKIPEDIA-TITLE-REGEX (re.compile "(.*) - Wikipedia")
@@ -7,21 +8,21 @@
       RAND-WIKI-PAGE-NAME "Random page in category - Wikipedia")
 
 (defn main [args]
-  (setv args (CmdArgs args) again True cat (. args cat))
+  (setv args (CmdArgs args)
+        cat (. args cat)
+        only-art (. args only-art)
+        no-conf (. args no-conf)
+        again True)
   (while again
     (setv p (random-wikipedia-page cat)
           page-title (get-page-title p))
     (if (= page-title RAND-WIKI-PAGE-NAME)
-        (exit-invalid-cat cat))
-    (if (-> (. args only-art) not (or (article? page-title)))
-        (if (. args no-conf)
-            (do
-              (webbrowser.open p)
-              (setv again False))
-            (= "y" (setx r (ask-open-wiki page-title)))
-            (webbrowser.open p)
-            (= r "q")
-            (setv again False)))))
+        (exit-invalid-cat cat)
+    (if (or (not only-art) (article? page-title))
+        (do (if (or no-conf (= "y" (setx r (ask-open-wiki page-title))))
+                (webbrowser.open p))
+            (if (or no-conf (= "q" r))
+                (setv again False)))))))
 
 (defn article? [page]
   (not-in ":" page))
@@ -38,8 +39,7 @@
 (defn random-wikipedia-page [cat]
   (-> (if (none? cat) WIKI-RAND-URL
           (+ WIKI-RAND-IN-CAT-URL cat))
-      urllib.request.urlopen
-      .geturl))
+      urlopen .geturl))
 
 (defn wiki-title [title]
   (.group (re.match WIKIPEDIA-TITLE-REGEX title) 1))
@@ -57,10 +57,10 @@
   (defn __init__ [self cmd-args]
     (setv args-dict (->
       (doto (argparse.ArgumentParser :prog "rand-wiki-page")
-        (.add-argument "-f" "--no-conf" :action "store_true"
+        (.add-argument "-n" "--no-conf" :action "store_true"
           :help "open a page without asking for confirmation")
-        (.add-argument "-a" "--only-articles"
-          :help "exclude categories and other non-article pages" :action "store_true")
+        (.add-argument "-a" "--only-articles" :action "store_true"
+          :help "exclude categories and other non-article pages")
         (.add-argument "-c" "--cat" :help "category of the page"))
       (.parse-args cmd-args)
       (. __dict__)))
@@ -72,7 +72,7 @@
 
 (if (= __name__ "__main__")
   (try
-    (main (rest sys.argv))
+    (main (rest argv))
   (except [e urllib.error.URLError]
     (exit (+ "URLError: " (-> e (. reason) str))))
   (except [e Exception]
