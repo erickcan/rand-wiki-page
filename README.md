@@ -16,7 +16,7 @@ To open an article in the 'Computer Science' category without asking for confirm
 $ rand-wiki-page -nacComputer_science
 ```
 ---
-To open a random article without asking for confirmation:
+To open a random article asking for confirmation:
 ```
 $ rand-wiki-page -a
 ```
