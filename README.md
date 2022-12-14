@@ -11,12 +11,12 @@ where
 - `--cat` | `-c` specifies the category of the random page.
 
 ### Examples
-To open, without confirmation, a random article in the 'Computer science' category:
+To open an article in the 'Computer Science' category without asking for confirmation:
 ```
 $ rand-wiki-page -nacComputer_science
 ```
 ---
-To open, asking for confirmation, a random article:
+To open a random article without asking for confirmation:
 ```
 $ rand-wiki-page -a
 ```
